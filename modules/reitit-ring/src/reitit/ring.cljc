@@ -65,6 +65,8 @@
       ([request respond _]
        (respond (handle request))))))
 
+(def ring-endpoint? (r/mk-intermediate-endpoint-predicate #{:handler}))
+
 ;;
 ;; public api
 ;;
@@ -93,7 +95,8 @@
   ([data opts]
    (let [opts (merge {:coerce coerce-handler
                       :compile compile-result
-                      ::default-options-handler default-options-handler} opts)]
+                      ::default-options-handler default-options-handler
+                      :endpoint? ring-endpoint?} opts)]
      (r/router data opts))))
 
 (defn routes

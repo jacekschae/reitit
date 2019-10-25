@@ -338,6 +338,24 @@
   [_ _ _ _ childs]
   (not (seq childs)))
 
+(defn mk-intermediate-endpoint-predicate
+  "Create predicate that returns truthy for valid endpoints, where the path is a leaf in
+  the route tree, or the route data contains one of the specified keys at top-level or
+  at the first level of nested maps.
+  For example, both `{:handler handler}` and `{:get {:handler handler}}` would pass
+  the check for `:handler` in intermediate paths."
+  [req-keys]
+  (fn [prev-path path meta data childs]
+    (let [get-nested-ks (fn [m] (reduce (fn [acc v]
+                                          (if (map? v) (into acc (keys v))
+                                                       acc))
+                                        (set (keys m))
+                                        (vals m)))]
+      (or (leaf-endpoint? prev-path path meta data childs)
+          (and (map? data)
+               (seq childs)
+               (some (set req-keys) (get-nested-ks data)))))))
+
 (defn ^:no-doc default-router-options []
   {:lookup (fn lookup [[_ {:keys [name]}] _] (if name #{name}))
    :expand expand
