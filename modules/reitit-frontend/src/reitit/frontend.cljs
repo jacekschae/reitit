@@ -38,7 +38,8 @@
   ([router name path-params]
    (r/match-by-name router name path-params)))
 
-(def frontend-endpoint? (r/mk-intermediate-endpoint-predicate #{:name :view}))
+(def frontend-endpoint (r/mk-intermediate-endpoint-transform [{:kss       [[:name]]
+                                                               :transform :consume}]))
 
 (defn router
   "Create a `reitit.core.router` from raw route data and optionally an options map.
@@ -47,7 +48,7 @@
    (router raw-routes {}))
   ([raw-routes opts]
    (r/router raw-routes (merge {:compile rc/compile-request-coercers
-                                :endpoint? frontend-endpoint?} opts))))
+                                :endpoint frontend-endpoint} opts))))
 
 (defn match-by-name!
   "Logs problems using console.warn"

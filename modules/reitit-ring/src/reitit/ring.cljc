@@ -65,7 +65,10 @@
       ([request respond _]
        (respond (handle request))))))
 
-(def ring-endpoint? (r/mk-intermediate-endpoint-predicate #{:handler}))
+(def ring-endpoint (r/mk-intermediate-endpoint-transform [{:kss (for [method http-methods] [method :handler])
+                                                           :transform :inherit}
+                                                          {:kss       [[:name]]
+                                                           :transform :consume}]))
 
 ;;
 ;; public api
@@ -96,7 +99,7 @@
    (let [opts (merge {:coerce coerce-handler
                       :compile compile-result
                       ::default-options-handler default-options-handler
-                      :endpoint? ring-endpoint?} opts)]
+                      :endpoint ring-endpoint} opts)]
      (r/router data opts))))
 
 (defn routes
