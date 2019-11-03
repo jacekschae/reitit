@@ -334,9 +334,12 @@
 ;; Creating Routers
 ;;
 
-(defn leaf-endpoint?
-  [_ _ _ _ childs]
-  (not (seq childs)))
+(defn leaf-endpoint
+  [_ _ _ data childs]
+  (when-not (seq childs)
+    {:endpoint data
+     :inherit  {}}))
+
 
 (defn mk-intermediate-endpoint-predicate
   "Create predicate that returns truthy for valid endpoints, where the path is a leaf in
@@ -363,7 +366,7 @@
    :compile (fn compile [[_ {:keys [handler]}] _] handler)
    :exception exception/exception
    :conflicts (fn throw! [conflicts] (exception/fail! :path-conflicts conflicts))
-   :endpoint? leaf-endpoint?})
+   :endpoint  leaf-endpoint})
 
 (defn router
   "Create a [[Router]] from raw route data and optionally an options map.
@@ -384,7 +387,9 @@
   | `:conflicts` | Function of `{route #{route}} => ()` to handle conflicting routes
   | `:exception` | Function of `Exception => Exception ` to handle creation time exceptions (default `reitit.exception/exception`)
   | `:router`    | Function of `routes opts => router` to override the actual router implementation
-  | `:endpoint?` | Function of `prev-path path prev-data data children => truthy|falsy` to check if path can be endpoint"
+  | `:endpoint`  | Function of `prev-path path expanded-data data children => {:endpoint :inherit}`.
+  |              | Used to transform data for this endpoint and data inherited to child routes.
+  |              | Return falsy or `{:endpoint nil}` to skip path as endpoint and pass data to children."
   ([raw-routes]
    (router raw-routes {}))
   ([raw-routes opts]

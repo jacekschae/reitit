@@ -37,7 +37,7 @@
     coll
     coll))
 
-(defn walk [raw-routes {:keys [path data routes expand endpoint?]
+(defn walk [raw-routes {:keys [path data routes expand endpoint]
                         :or {data [], routes []}
                         :as opts}]
   (letfn
@@ -53,11 +53,15 @@
                                             (sequential? (first maybe-arg)))
                                        (nil? maybe-arg))
                                  [{} args]
-                                 [maybe-arg (rest args)])
-                 macc (into macc (expand data opts))
-                 child-routes (walk-many (str pacc path) macc (keep identity childs))]
-             (-> (when (endpoint? pacc path macc data childs) [[(str pacc path) macc]])
-                 (concat (when (seq childs) (seq child-routes))))))))]
+                                 [maybe-arg (rest args)])]
+             (let [d (endpoint pacc path macc data childs)
+                   data-for-endpoint (when (:endpoint d) (into macc (expand (:endpoint d) opts)))
+                   data-for-children (or (:inherit d) data)
+                   macc (into macc (expand data-for-children opts))]
+               (-> (when data-for-endpoint [[(str pacc path) data-for-endpoint]])
+                   (concat (when (seq childs) (-> (str pacc path)
+                                                  (walk-many macc (keep identity childs))
+                                                  (seq))))))))))]
     (walk-one path (mapv identity data) raw-routes)))
 
 (defn map-data [f routes]
