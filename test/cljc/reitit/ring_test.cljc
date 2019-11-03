@@ -124,7 +124,9 @@
                     ["foo"    {:name ::foo}] ;; Inherits handler from above
                     ["bar"    {:get {:handler handler} :name ::bar}
                      ["/baz"  {:get {:handler handler} :name ::baz}]]
-                    ["ping"   {:name ::ping} ;; No handler
+                    ["bang" {}
+                     ["/bang"]]
+                    ["ping"   {:name ::ping}
                      ["/pong" {:get {:handler handler} :name ::pong}]]]
             router (ring/router routes)
             match  #(r/match-by-path router %)]
@@ -134,9 +136,10 @@
           "/foo" ::foo
           "/bar" ::bar
           "/bar/baz" ::baz
+          "/ping" ::ping
           "/ping/pong" ::pong)
-        (is (nil? (match "/ping")))
-        (is (nil? (r/match-by-name router ::ping)))))
+        (is (nil? (match "/bang")))
+        (is (-> (match "/bang/bang") :data :get :handler))))
 
     (testing "with conflicts"
       (let [routes ["/"       {:get {:handler handler} :name ::root}
